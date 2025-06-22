@@ -1,1 +1,21 @@
 //manifest/modules.json
+[
+  {
+    "name": "Ayatori Ritual",
+    "type": "Agent Ritual",
+    "inputs": ["user consent", "voice profile"],
+    "outputs": ["ritual.json", "agent memory"],
+    "interface": "web UI, voice, deploy trigger",
+    "depends_on": [],
+    "routes_to": ["Card Viewer"]
+  },
+  {
+    "name": "Card Viewer",
+    "type": "Display Module",
+    "inputs": ["ritual.json"],
+    "outputs": ["rendered view"],
+    "interface": "web UI",
+    "depends_on": ["Ayatori Ritual"],
+    "routes_to": []
+  }
+]
