@@ -1,98 +1,41 @@
-// agent_of_orchestration.js
+// generateRitualFromOpenAI.js
 
-const fs = require('fs');
-const path = require('path');
-const { generateRitualJSON } = require('./generateRitualFromOpenAI');
-const modulesPath = path.join(__dirname, 'manifest', 'modules.json');
-const statePath = path.join(__dirname, 'state', 'state.json');
-const outputsDir = path.join(__dirname, 'outputs');
+const { OpenAI } = require("openai");
+const openai = new OpenAI();
 
-fs.mkdirSync(outputsDir, { recursive: true });
-fs.mkdirSync(path.dirname(statePath), { recursive: true });
+async function generateRitualJSON(voiceProfile = "goddess_wisdom.v2") {
+  const prompt = `
+You are the Ayatori agent. Based on the user's voice profile "${voiceProfile}", generate a ritual configuration in valid JSON format with the following keys:
 
-function loadModules() {
+{
+  "invocation_phrase": string,
+  "tone": string,
+  "user_consent_required": boolean,
+  "theme": string,
+  "voice_profile": "${voiceProfile}",
+  "outputs": [string]
+}
+
+The ritual should reflect the personality and mood of the given voice profile. Keep the response concise, structured, and properly formatted as JSON.
+`;
+
   try {
-    const data = fs.readFileSync(modulesPath, 'utf-8');
-    return JSON.parse(data);
-  } catch (err) {
-    console.error('❌ Failed to load modules:', err);
-    process.exit(1);
-  }
-}
-
-function saveState(state) {
-  fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
-  console.log('🧠 State saved to state/state.json');
-}
-
-function writeOutput(filename, data) {
-  const filePath = path.join(outputsDir, filename);
-  fs.writeFileSync(filePath, data);
-  console.log(`💾 Output written: outputs/${filename}`);
-}
-
-async function executeModules(modules) {
-  const executed = new Set();
-  const stateLog = [];
-
-  async function execute(module) {
-    if (executed.has(module.name)) return;
-
-    for (const depName of module.depends_on) {
-      const dep = modules.find(m => m.name === depName);
-      if (dep) await execute(dep);
-    }
-
-    console.log(`🔧 Executing: ${module.name} (${module.type})`);
-    console.log(`   🧩 Inputs: ${module.inputs.join(', ')}`);
-    console.log(`   🎯 Outputs: ${module.outputs.join(', ')}`);
-
-    const timestamp = new Date().toISOString();
-
-    // 🌟 Ayatori Ritual Module
-    if (module.name === 'Ayatori Ritual') {
-      try {
-        const ritualData = await generateRitualJSON();
-        if (ritualData) {
-          writeOutput('ritual.json', JSON.stringify(ritualData, null, 2));
-        } else {
-          console.warn('⚠️ No ritual data returned from OpenAI.');
-        }
-      } catch (err) {
-        console.error('❌ Error generating ritual from OpenAI:', err.message);
-      }
-    }
-
-    // 🖼 Card Viewer Display Module
-    if (module.name === 'Card Viewer') {
-      writeOutput('rendered_view.html', `
-        <html><body><h1>🔥 Dumpster Fire Ritual Viewer</h1>
-        <p>Loaded from ritual.json</p></body></html>
-      `);
-    }
-
-    stateLog.push({
-      module: module.name,
-      type: module.type,
-      timestamp,
-      inputs: module.inputs,
-      outputs: module.outputs
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
     });
 
-    executed.add(module.name);
-  }
+    const content = response.choices[0].message.content;
 
-  for (const module of modules) {
-    await execute(module);
+    // Try parsing the returned string into JSON
+    const parsed = JSON.parse(content);
+    console.log("✅ ritual.json successfully generated!");
+    return parsed;
+  } catch (err) {
+    console.error("❌ Failed to generate or parse ritual JSON:", err.message);
+    return null;
   }
-
-  saveState({ executed: Array.from(executed), history: stateLog });
 }
 
-async function main() {
-  const modules = loadModules();
-  console.log('📦 Loaded Modules:', modules);
-  await executeModules(modules);
-}
-
-main().catch(console.error);
+module.exports = generateRitualJSON;
