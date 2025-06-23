@@ -1,16 +1,13 @@
-// generateRitualFromGemini.js
-
-require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const dotenv = require('dotenv');
+dotenv.config();
+
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-async function generateRitualJSON() {
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-  const prompt = `
+const prompt = `
 You are Ayatori — a ritual designer and hospitality agent from <ok.dope.>. Your job is to generate a complete experiential ritual payload.
 
 Respond ONLY with valid JSON.
@@ -26,7 +23,12 @@ Required fields:
 - timestamp: current ISO string
 `;
 
+async function generateRitualJSON() {
   try {
+    const model = genAI.getGenerativeModel({
+      model: "models/gemini-2.5-pro-exp-03-25"
+    });
+
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
@@ -35,15 +37,16 @@ Required fields:
     const jsonString = text.slice(jsonStart, jsonEnd);
     const ritualData = JSON.parse(jsonString);
 
-    const outputPath = path.join(__dirname, 'outputs', 'ritual.json');
-    fs.writeFileSync(outputPath, JSON.stringify(ritualData, null, 2));
-    console.log('🔮 Ritual written to outputs/ritual.json');
+    fs.writeFileSync(
+      path.join(__dirname, 'outputs', 'ritual.json'),
+      JSON.stringify(ritualData, null, 2)
+    );
+
     return ritualData;
   } catch (err) {
-    console.error('❌ Gemini ritual generation failed:', err.message);
+    console.error("❌ Gemini ritual generation failed:", err);
     return null;
   }
 }
 
 module.exports = generateRitualJSON;
-
