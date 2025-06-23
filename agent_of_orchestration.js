@@ -1,5 +1,8 @@
+// agent_of_orchestration.js
+
 const fs = require('fs');
 const path = require('path');
+const generateRitualJSON = require('./generateRitualFromGemini'); // Gemini integration
 
 const modulesPath = path.join(__dirname, 'manifest', 'modules.json');
 const statePath = path.join(__dirname, 'state', 'state.json');
@@ -29,17 +32,17 @@ function writeOutput(filename, data) {
   console.log(`💾 Output written: outputs/${filename}`);
 }
 
-function executeModules(modules) {
+async function executeModules(modules) {
   const executed = new Set();
   const stateLog = [];
 
-  function execute(module) {
+  async function execute(module) {
     if (executed.has(module.name)) return;
 
-    module.depends_on.forEach(depName => {
+    for (const depName of module.depends_on) {
       const dep = modules.find(m => m.name === depName);
-      if (dep) execute(dep);
-    });
+      if (dep) await execute(dep);
+    }
 
     console.log(`🔧 Executing: ${module.name} (${module.type})`);
     console.log(`   🧩 Inputs: ${module.inputs.join(', ')}`);
@@ -47,15 +50,21 @@ function executeModules(modules) {
 
     const timestamp = new Date().toISOString();
 
-    // Simulate file outputs
+    // 🌟 Ayatori Ritual Module
     if (module.name === 'Ayatori Ritual') {
-      writeOutput('ritual.json', JSON.stringify({
-        user_consent: true,
-        voice_profile: "goddess_wisdom.v2",
-        timestamp
-      }, null, 2));
+      try {
+        const ritualData = await generateRitualJSON();
+        if (ritualData) {
+          writeOutput('ritual.json', JSON.stringify(ritualData, null, 2));
+        } else {
+          console.warn('⚠️ No ritual data returned from Gemini.');
+        }
+      } catch (err) {
+        console.error('❌ Error generating ritual from Gemini:', err.message);
+      }
     }
 
+    // 🖼 Card Viewer Display Module
     if (module.name === 'Card Viewer') {
       writeOutput('rendered_view.html', `
         <html><body><h1>🔥 Dumpster Fire Ritual Viewer</h1>
@@ -74,10 +83,17 @@ function executeModules(modules) {
     executed.add(module.name);
   }
 
-  modules.forEach(execute);
+  for (const module of modules) {
+    await execute(module);
+  }
+
   saveState({ executed: Array.from(executed), history: stateLog });
 }
 
-const modules = loadModules();
-console.log('📦 Loaded Modules:', modules);
-executeModules(modules);
+async function main() {
+  const modules = loadModules();
+  console.log('📦 Loaded Modules:', modules);
+  await executeModules(modules);
+}
+
+main().catch(console.error);
