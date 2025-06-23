@@ -1,34 +1,46 @@
-// generateRitualFromOpenAI.js
-const { OpenAI } = require("openai");
-require("dotenv").config();
+import fs from 'fs';
+import { OpenAI } from 'openai';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function generateRitualJSON() {
+export async function generateRitualJSON() {
   try {
+    const prompt = `
+You are a ritual architect for Ayatori by Serviō. Generate a structured JSON object called "ritual.json" using the following keys:
+
+- invocation_phrase (string)
+- mood (string, poetic)
+- theme (string, abstract or culinary)
+- voice_profile (string, voice identity name)
+- call_to_action (string, guiding phrase)
+- response_time (number, estimated seconds)
+- format (string, e.g. "dialogue", "vision", "audio")
+
+Ensure the structure is clean, parseable JSON. Begin now.
+    `.trim();
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        {
-          role: "system",
-          content: "You are a ritual guide AI. Output structured JSON describing a user's consent, voice profile, and timestamp in a ritual context."
-        },
-        {
-          role: "user",
-          content: "Begin the Ayatori ritual using profile 'goddess_wisdom.v2'"
-        }
-      ],
-      response_format: "json",
+        { role: "system", content: "You generate ritual schemas for a poetic AI interface." },
+        { role: "user", content: prompt }
+      ]
     });
 
-    const parsed = JSON.parse(response.choices[0].message.content);
-    return parsed;
-  } catch (error) {
-    console.error("❌ OpenAI ritual generation failed:", error);
+    const text = response.choices[0]?.message?.content || "{}";
+    const ritualData = JSON.parse(text);
+
+    fs.writeFileSync("outputs/ritual.json", JSON.stringify(ritualData, null, 2));
+    console.log("✅ ritual.json written to outputs/");
+    return ritualData;
+
+  } catch (err) {
+    console.error("❌ OpenAI ritual generation failed:", err);
     return null;
   }
 }
-
-module.exports = generateRitualJSON;
