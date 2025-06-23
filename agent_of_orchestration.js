@@ -2,8 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const generateRitualJSON = require("./generateRitualFromOpenAI");
-
+const { generateRitualJSON } = require('./generateRitualFromOpenAI');
 const modulesPath = path.join(__dirname, 'manifest', 'modules.json');
 const statePath = path.join(__dirname, 'state', 'state.json');
 const outputsDir = path.join(__dirname, 'outputs');
