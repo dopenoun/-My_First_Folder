@@ -1,51 +1,35 @@
-import fs from 'fs';
-import { OpenAI } from 'openai';
-import dotenv from 'dotenv';
+// generateRitualFromOpenAI.js
 
-dotenv.config();
+const { OpenAI } = require('openai');
+require('dotenv').config();
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY
 });
 
-export async function generateRitualJSON() {
+module.exports = async function generateRitualJSON() {
   try {
-    const prompt = `
-You are a poetic ritual architect. Create a valid JSON object for a hospitality ritual with the following keys:
-
-{
-  "invocation_phrase": "string",
-  "mood": "string (descriptive & poetic)",
-  "theme": "string (symbolic or culinary)",
-  "voice_profile": "string",
-  "call_to_action": "string",
-  "response_time": number,
-  "format": "string (e.g. 'dialogue', 'vision', etc.)"
-}
-
-Respond with ONLY valid, parseable JSON. Do not wrap in markdown or text.
-    `.trim();
-
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4",
       messages: [
-        { role: "system", content: "You generate JSON schemas for a poetic AI ritual interface." },
-        { role: "user", content: prompt }
+        {
+          role: "system",
+          content: "You are a ritual-generating assistant. Output JSON with keys like 'voice_profile', 'mood', 'invocation_phrase', 'theme', and 'modules'."
+        },
+        {
+          role: "user",
+          content: "Generate a new JSON-based ritual configuration for a voice-based agent called Ayatori."
+        }
       ],
       temperature: 0.7
     });
 
-    const rawText = response.choices[0]?.message?.content || '{}';
+    const result = response.choices?.[0]?.message?.content;
+    if (!result) throw new Error("No content returned from OpenAI");
 
-    // Parse the result to validate it's real JSON
-    const ritual = JSON.parse(rawText);
-
-    fs.writeFileSync('outputs/ritual.json', JSON.stringify(ritual, null, 2));
-    console.log("✅ ritual.json successfully written!");
-    return ritual;
-
+    return JSON.parse(result);
   } catch (err) {
-    console.error("❌ OpenAI ritual generation failed:", err);
+    console.error("❌ Failed to generate ritual JSON:", err.message);
     return null;
   }
-}
+};
