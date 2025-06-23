@@ -7,7 +7,11 @@
     {
       "module": "Ayatori Ritual",
       "type": "Agent Ritual",
+ HEAD
       "timestamp": "2025-06-23T21:17:16.671Z",
+
+      "timestamp": "2025-06-23T21:02:20.252Z",
+ parent of e71b668 (🔧 Describe your update here)
       "inputs": [
         "user consent",
         "voice profile"
@@ -20,7 +24,11 @@
     {
       "module": "Card Viewer",
       "type": "Display Module",
+<<<<<<< HEAD
       "timestamp": "2025-06-23T21:17:19.830Z",
+=======
+      "timestamp": "2025-06-23T21:02:20.720Z",
+>>>>>>> parent of e71b668 (🔧 Describe your update here)
       "inputs": [
         "ritual.json"
       ],
