@@ -56,10 +56,10 @@ async function executeModules(modules) {
         if (ritualData) {
           writeOutput('ritual.json', JSON.stringify(ritualData, null, 2));
         } else {
-          console.warn('⚠️ No ritual data returned from Gemini.');
+          console.warn('⚠️ No ritual data returned from OpenAI.');
         }
       } catch (err) {
-        console.error('❌ Error generating ritual from Gemini:', err.message);
+        console.error('❌ Error generating ritual from OpenAI:', err.message);
       }
     }
 
