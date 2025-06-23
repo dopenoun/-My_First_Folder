@@ -11,33 +11,38 @@ const openai = new OpenAI({
 export async function generateRitualJSON() {
   try {
     const prompt = `
-You are a ritual architect for Ayatori by Serviō. Generate a structured JSON object called "ritual.json" using the following keys:
+You are a poetic ritual architect. Create a valid JSON object for a hospitality ritual with the following keys:
 
-- invocation_phrase (string)
-- mood (string, poetic)
-- theme (string, abstract or culinary)
-- voice_profile (string, voice identity name)
-- call_to_action (string, guiding phrase)
-- response_time (number, estimated seconds)
-- format (string, e.g. "dialogue", "vision", "audio")
+{
+  "invocation_phrase": "string",
+  "mood": "string (descriptive & poetic)",
+  "theme": "string (symbolic or culinary)",
+  "voice_profile": "string",
+  "call_to_action": "string",
+  "response_time": number,
+  "format": "string (e.g. 'dialogue', 'vision', etc.)"
+}
 
-Ensure the structure is clean, parseable JSON. Begin now.
+Respond with ONLY valid, parseable JSON. Do not wrap in markdown or text.
     `.trim();
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: "You generate ritual schemas for a poetic AI interface." },
+        { role: "system", content: "You generate JSON schemas for a poetic AI ritual interface." },
         { role: "user", content: prompt }
-      ]
+      ],
+      temperature: 0.7
     });
 
-    const text = response.choices[0]?.message?.content || "{}";
-    const ritualData = JSON.parse(text);
+    const rawText = response.choices[0]?.message?.content || '{}';
 
-    fs.writeFileSync("outputs/ritual.json", JSON.stringify(ritualData, null, 2));
-    console.log("✅ ritual.json written to outputs/");
-    return ritualData;
+    // Parse the result to validate it's real JSON
+    const ritual = JSON.parse(rawText);
+
+    fs.writeFileSync('outputs/ritual.json', JSON.stringify(ritual, null, 2));
+    console.log("✅ ritual.json successfully written!");
+    return ritual;
 
   } catch (err) {
     console.error("❌ OpenAI ritual generation failed:", err);
